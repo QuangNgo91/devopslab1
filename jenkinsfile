@@ -1,0 +1,33 @@
+#!groovy
+
+pipeline {
+
+    agent {
+        label 'linux'
+    }
+
+    parameters {
+        string(name: 'aws_access_key', description: 'accesskey.')
+        string(name: 'aws_secret_key', description: 'secretkey.')
+        
+    }
+        stage('Deploy') {
+
+            steps {
+                dir('.') {
+                    withEnv([
+                        "PATH+TF=${tool 'terraform'}",
+                        "TF_VAR_aws_access_key=${aws_access_key}",
+                        "TF_VAR_aws_secret_key=${aws_secret_key}"
+                    ])
+                    sh """
+                            TIME_STAMP=`date +%y%m%d%H%M`
+                            terraform init 
+                            terraform plan -var datestamp=\$TIME_STAMP
+                            terraform apply -var datestamp=\$TIME_STAMP -auto-approve
+                    """        
+
+                }
+            }
+        }
+}
